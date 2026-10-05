@@ -1,0 +1,29 @@
+# Downloaded structures (regenerated on demand by the server)
+data/cache/
+# Design job output
+data/jobs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Editors, tooling and OS
+.DS_Store
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# A deployment's own address and user pool. Public values, but they belong to
+# one deployment rather than to the code -- see web/config.example.json.
+web/config.json
+web/config.json.before-preview
+
+# Rendered CloudFormation. `cdk synth` makes it; tools/check_stack.py reads it.
+deploy/aws/cdk/cdk.out/
+deploy/aws/cdk/.venv/
+deploy/aws/cdk/cdk.context.json

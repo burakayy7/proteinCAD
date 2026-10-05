@@ -1,0 +1,748 @@
+/* proteinCAD -- a dark, technical shell around the 3D viewport. */
+
+:root {
+  --bg: #0e1116;
+  --panel: #151a21;
+  --panel-2: #1b212a;
+  --line: #262e39;
+  --text: #dfe6ee;
+  --muted: #8b97a6;
+  --accent: #4f9dff;
+  --accent-dim: #2b5c99;
+  --warn: #ffd54a;
+  --radius: 6px;
+  --header: 46px;
+  --status: 26px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+/* Class rules below use display:flex, which would otherwise beat [hidden]. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: grid;
+  grid-template-rows: var(--header) 1fr var(--status);
+}
+
+.mono { font-family: var(--mono); font-size: 12px; }
+.muted { color: var(--muted); }
+
+/* ---------------------------------------------------------------- top bar */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+.brand b { font-weight: 600; color: var(--accent); }
+.brand span { font-weight: 300; }
+
+.topbar .group { display: flex; align-items: center; gap: 8px; }
+.topbar .group.right { margin-left: auto; }
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent-dim); background: #222a35; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn.ghost { background: transparent; }
+.btn.on { border-color: var(--accent); color: var(--accent); }
+.btn.small { padding: 3px 7px; font-size: 11px; }
+/* A button that cannot be pressed has to look like one. Without this a
+   disabled button kept full-strength text, its ordinary border and a pointer
+   cursor, lit up on hover, and did nothing when clicked -- which from the
+   other side of the screen is indistinguishable from broken. `:not(:disabled)`
+   above rather than a later override, so no rule further down the file can
+   quietly put the hover back. */
+.btn:disabled {
+  opacity: 0.45;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+/* The Docs button is a real link, so it can be opened in a new tab and copied
+   like one. Everything an anchor brings with it has to be undone to make it sit
+   level with the buttons beside it. */
+a.btn { display: inline-flex; align-items: center; text-decoration: none; }
+a.btn:hover { text-decoration: none; }
+
+.field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+
+select, input[type="text"], input[type="number"] {
+  appearance: none;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12px;
+}
+select:focus, input:focus { outline: none; border-color: var(--accent); }
+
+.fetch { display: flex; gap: 6px; }
+/* Wide enough for EMD-25575 as well as 4HHB. */
+.fetch input { width: 116px; text-transform: uppercase; font-family: var(--mono); }
+
+/* -------------------------------------------------------------- workspace */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 260px 1fr 306px;
+  min-height: 0;
+}
+/* Collapsed panels keep a slim rail, so the button that brings them back is
+   still on screen. Collapsing to zero width hides its own toggle. */
+.workspace.no-left { grid-template-columns: 26px 1fr 306px; }
+.workspace.no-right { grid-template-columns: 260px 1fr 26px; }
+.workspace.no-left.no-right { grid-template-columns: 26px 1fr 26px; }
+
+.workspace.no-left .panel.left .panel-body,
+.workspace.no-left .panel.left .panel-head > h2,
+.workspace.no-right .panel.right .panel-body,
+.workspace.no-right .panel.right .panel-head > .tabs { display: none; }
+
+.workspace.no-left .panel.left .panel-head,
+.workspace.no-right .panel.right .panel-head { padding: 0; justify-content: center; }
+
+.workspace.no-left .panel.left .panel-head .icon,
+.workspace.no-right .panel.right .panel-head .icon { margin: 0; width: 100%; text-align: center; }
+
+.workspace.no-left #collapse-left,
+.workspace.no-right #collapse-right { transform: rotate(180deg); }
+
+.panel {
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.panel.left { border-right: 1px solid var(--line); }
+.panel.right { border-left: 1px solid var(--line); }
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 6px 0 12px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.panel-head h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tabs { display: flex; gap: 2px; }
+.tab {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 8px 5px;
+  cursor: pointer;
+}
+.tab:hover { color: var(--text); }
+.tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+
+.panel-head .icon {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.panel-head .icon:hover { color: var(--text); }
+
+.panel-body { overflow-y: auto; overflow-x: hidden; flex: 1; min-height: 0; }
+.panel-body::-webkit-scrollbar { width: 9px; }
+.panel-body::-webkit-scrollbar-thumb { background: #2b3440; border-radius: 5px; }
+.panel-body::-webkit-scrollbar-track { background: transparent; }
+
+/* --------------------------------------------------------------- viewport */
+
+.viewport { position: relative; min-width: 0; background: var(--bg); }
+.viewport canvas { display: block; }
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  pointer-events: none;
+  color: var(--muted);
+}
+.empty h1 { margin: 0; font-size: 20px; font-weight: 400; color: var(--text); }
+.empty p { margin: 0; max-width: 380px; }
+.empty code { font-family: var(--mono); color: var(--accent); }
+.empty .examples { display: flex; gap: 8px; margin-top: 8px; pointer-events: auto; flex-wrap: wrap; justify-content: center; }
+
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(14, 17, 22, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.loading {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(21, 26, 33, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 5px 14px 5px 10px;
+  font-size: 12px;
+}
+.spinner {
+  width: 12px; height: 12px;
+  border: 2px solid var(--accent-dim);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ------------------------------------------------------------------- tree */
+
+.tree-item { border-bottom: 1px solid var(--line); }
+
+.tree-structure {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px 7px 6px;
+  cursor: default;
+}
+.tree-structure:hover { background: var(--panel-2); }
+.tree-structure.active { background: #1d2733; }
+/* The structure the tools act on. */
+.tree-structure.current { box-shadow: inset 3px 0 0 var(--accent); }
+.tree-structure.current .tree-name { color: var(--accent); }
+
+.twisty {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  width: 16px;
+  padding: 0;
+  font-size: 10px;
+  transition: transform 0.12s;
+}
+.twisty.open { transform: rotate(90deg); }
+
+.tree-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+.tree-sub { font-size: 11px; color: var(--muted); padding: 0 8px 6px 28px; }
+.tree-sub.title { color: var(--text); padding-bottom: 3px; }
+
+.eye, .close {
+  background: none; border: 0; cursor: pointer; color: var(--muted);
+  padding: 2px 4px; font-size: 12px; line-height: 1;
+}
+.eye:hover, .close:hover { color: var(--text); }
+.eye.off { opacity: 0.35; }
+
+.chain-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 26px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.chain-row:hover { background: var(--panel-2); }
+.chain-row.selected { background: #24344a; }
+.swatch {
+  width: 10px; height: 10px; border-radius: 2px; flex: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+}
+.chain-id { font-family: var(--mono); min-width: 22px; }
+.chain-meta { color: var(--muted); font-size: 11px; margin-left: auto; }
+
+.rep-select { font-size: 11px; padding: 2px 4px; }
+
+/* -------------------------------------------------------------- inspector */
+
+.section { border-bottom: 1px solid var(--line); padding: 10px 12px; }
+.section h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.section .row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+.section .row:last-child { margin-bottom: 0; }
+.section .row.tight { gap: 4px; }
+
+.kv { display: grid; grid-template-columns: 84px 1fr; gap: 2px 8px; font-size: 12px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-family: var(--mono); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; }
+
+.sel-input {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.sel-error { color: #ff8a80; font-size: 11px; }
+
+label.check { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--accent); }
+input[type="range"] { flex: 1; accent-color: var(--accent); }
+input[type="color"] {
+  width: 26px; height: 20px; padding: 0; border: 1px solid var(--line);
+  background: none; border-radius: 4px; cursor: pointer;
+}
+
+.measure-list { display: flex; flex-direction: column; gap: 4px; }
+.measure-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-family: var(--mono); }
+.measure-row .close { margin-left: auto; }
+
+input.num {
+  width: 56px;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 4px;
+  -moz-appearance: textfield;
+}
+input.num::-webkit-outer-spin-button,
+input.num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.num:disabled { opacity: 0.4; }
+.muted.axis { width: 26px; font-size: 11px; }
+
+.hint { font-size: 11px; color: var(--muted); }
+
+/* ----------------------------------------------------------------- design */
+
+.btn.go { border-color: var(--accent-dim); color: var(--accent); }
+.btn.go:hover:not(:disabled) { border-color: var(--accent); background: #1b2a3d; }
+.btn.go:disabled { color: var(--muted); border-color: var(--line); }
+
+pre.spec {
+  margin: 8px 0 0;
+  padding: 6px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: pre;
+}
+
+/* Sequences are one long line each; wrapping beats a horizontal scrollbar. */
+pre.spec.wrap { white-space: pre-wrap; word-break: break-all; }
+
+/* A tunnel URL is long and a token is short; neither fits in a .num box. */
+input.wide {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+input.num.token { width: 140px; font-family: var(--mono); }
+
+/* The generated settings panel. Forty-odd controls across six groups, so the
+   labels are given a fixed column: ragged left edges turn a list of settings
+   into something you have to read rather than scan. */
+.opt-group { margin: 6px 0 2px; }
+.opt-head {
+  margin: 6px 0 3px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.muted.opt { flex: 0 0 104px; }
+.rep-select.wide { flex: 1; min-width: 0; }
+/* The GPU's state, coloured by what it is costing: running is the one worth
+   catching out of the corner of an eye, because it is the one being paid for. */
+.gpu-state {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.gpu-state[data-state='running'] { border-color: var(--warn); color: var(--warn); }
+.gpu-state[data-state='pending'],
+.gpu-state[data-state='stopping'] { border-color: var(--accent-dim); color: var(--accent); }
+/* Wide enough for "—", "on" and "off" and no wider: these sit in a column of
+   their own beside the number boxes. */
+.rep-select.tri { width: 52px; }
+textarea.wide {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  padding: 3px 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+input.wide.mono, input.mono { font-family: var(--mono); }
+
+pre.job-error {
+  margin: 4px 0 2px;
+  padding: 5px 6px;
+  max-height: 190px;
+  overflow: auto;
+  background: #241a1a;
+  border: 1px solid #4a2b2b;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #ffb4a8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.job { border-top: 1px solid var(--line); padding: 6px 0 4px; }
+.job:first-child { border-top: 0; }
+.job-mark { width: 12px; display: inline-block; }
+.job-mark.running { color: var(--accent); }
+.job-mark.done { color: #5fd68a; }
+.job-mark.failed { color: #ff8a80; }
+.job-mark.queued { color: var(--muted); }
+.empty-note { color: var(--muted); font-size: 12px; padding: 14px 12px; }
+
+.sequence {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 5px;
+}
+.sequence span { cursor: pointer; padding: 0 0.5px; }
+.sequence span:hover { background: var(--accent-dim); }
+.sequence span.sel { background: var(--warn); color: #10141a; }
+.sequence span.h { color: #f26d6d; }
+.sequence span.e { color: #f2c14e; }
+
+/* ------------------------------------------------------------- status bar */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--text);
+}
+.statusbar .spacer { flex: 1; }
+
+/* ----------------------------------------------------------------- dialog */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 11, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+.dialog {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 20px;
+  min-width: 380px;
+  max-width: 520px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.dialog h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+.shortcuts { display: grid; grid-template-columns: 168px 1fr; gap: 4px 12px; margin: 0 0 16px; font-size: 12px; }
+.shortcuts dt { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.shortcuts dd { margin: 0; }
+.dialog-note { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
+.dialog-note a { color: var(--accent); }
+
+.drop-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(79, 157, 255, 0.08);
+  border: 2px dashed var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+/* The shared GPU machine: one row per model, each with a state mark, a size
+   and a button that is only there while there is something to press. */
+.models { margin-top: 6px; }
+/* Two lines, because the panel is under three hundred pixels wide and
+   "not downloaded · 100 MB" beside a name and a button wraps into a mess. */
+.model-row {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.model-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+/* Said explicitly. Auto-placement put this after `.model-status`, which spans
+   the full width and therefore ends its row -- so the button was laid into
+   column one of the next row, 14px wide, with "Download" spilling out of a box
+   that small. It read as a broken panel, and the part of it that was a button
+   was a sliver. */
+.model-go { grid-column: 3; justify-self: end; }
+.model-status {
+  grid-column: 2 / -1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/* A heading for the list, so "0 of 3" is answered before it is asked. */
+.models-head {
+  margin-top: 10px;
+  padding-bottom: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.model-mark { text-align: center; color: var(--muted); }
+.model-mark[data-state='ready'] { color: #5fd68a; }
+.model-mark[data-state='downloading'],
+.model-mark[data-state='wanted'] { color: #6aa9ff; }
+.model-mark[data-state='failed'] { color: var(--warn); }
+.model-why { grid-column: 1 / -1; white-space: pre-wrap; }
+/* Why a button is greyed out, said next to it rather than only in a tooltip:
+   a disabled control with no explanation reads as a bug. */
+.hint.blocked { color: var(--warn); }
+
+/* The five minutes a GPU machine takes to arrive, made visible. Steps where
+   the boot script reports them, a share of the usual five minutes before the
+   first one lands -- and a timer, because a bar that is merely estimating
+   should not be the only thing on screen claiming to know. */
+.bar-wrap { margin: 6px 0 2px; }
+.bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  width: 3%;
+  border-radius: 2px;
+  background: #6aa9ff;
+  transition: width 400ms ease;
+}
+/* Before the first word comes back there is nothing to measure, so the bar
+   does not pretend to: it sweeps. The point is only to say that something is
+   happening right now, which is exactly what is known. */
+.bar-fill.waiting {
+  width: 40%;
+  transition: none;
+  animation: proteincad-sweep 1.1s ease-in-out infinite;
+}
+@keyframes proteincad-sweep {
+  0%   { margin-left: -40%; }
+  100% { margin-left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill.waiting { animation: none; width: 100%; opacity: 0.45; }
+}
+.bar-timer { margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* One per model row, spanning the columns under the name. */
+.model-bar { grid-column: 2 / -1; margin: 3px 0 1px; }
+/* An error that has to travel: the Jobs list is at the bottom of the panel and
+   is where somebody looks after pressing Run, so a reason up here needs to
+   announce itself rather than sit quietly. */
+.sel-error.shout {
+  border-left: 2px solid var(--warn);
+  padding-left: 6px;
+  animation: proteincad-notice 1.4s ease-out 2;
+}
+@keyframes proteincad-notice {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sel-error.shout { animation: none; }
+}
+
+/* ------------------------------------------------- the rotational landscape */
+
+/* Docked over the bottom of the viewport, the way .loading and .labels are.
+   Overlaying rather than taking a row of its own keeps the canvas the full size
+   of its container, which is what the renderer measures -- and keeps the
+   three-column grid, which the site's mobile stylesheet is written against,
+   exactly as it was. */
+.strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 186px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(21, 26, 33, 0.94);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(3px);
+}
+
+.plot-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--muted);
+  min-height: 26px;
+}
+.plot-head .group.right { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+/* The .icon rule is scoped to .panel-head, so say it again here rather than
+   widening that one and restyling every icon button in the app. */
+.plot-head .icon {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.plot-head .icon:hover { color: var(--text); }
+.plot-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plot-angle { min-width: 52px; text-align: center; color: var(--text); }
+
+.plot-area { position: relative; flex: 1; min-height: 0; }
+.plot { display: block; width: 100%; height: 100%; touch-action: none; cursor: ew-resize; }
+
+.plot-readout {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  pointer-events: none;
+}
+.plot-stat { display: flex; gap: 4px; align-items: baseline; }
+.plot-stat b { font-family: var(--mono); font-weight: 500; color: var(--text); }
+
+.plot-grid { stroke: var(--line); stroke-width: 1; }
+/* Every period, so "eight wells, 45 degrees apart" is visible rather than
+   something you have to count off the axis. */
+.plot-period { stroke: var(--accent-dim); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0.5; }
+.plot-tick { fill: var(--muted); font-size: 10px; font-family: var(--mono); }
+.plot-axis { fill: var(--muted); font-size: 10px; }
+.plot-empty { fill: var(--muted); font-size: 12px; }
+.plot-line { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; }
+/* A scan still running is not a closed curve, and drawing it as one would show
+   a landscape that has not been measured yet. */
+.plot-line.partial { stroke-dasharray: 5 3; opacity: 0.85; }
+.plot-min { fill: var(--muted); }
+.plot-min.deep { fill: var(--warn); }
+.plot-cursor { stroke: var(--text); stroke-width: 1; opacity: 0.5; }
+.plot-dot { fill: var(--text); stroke: var(--bg); stroke-width: 1.5; }
+
+.plot-foot { padding: 2px 10px 6px; }
+.plot-slider { width: 100%; accent-color: var(--accent); }
+
+/* Progress through a scan, in the panel. */
+.scan-bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; margin: 2px 0 6px; }
+.scan-bar > i { display: block; height: 100%; width: 0; background: var(--accent-dim); transition: width 0.3s linear; }
+.scan-bar.running > i { background: var(--accent); }
+
+/* On a phone the viewport is short, and a fifth of it is worth more to the
+   molecule than to the axis labels. */
+@media (max-width: 720px) {
+  .strip { height: 150px; }
+  .plot-readout { display: none; }
+}
+
+/* ------------------------------------------------------------ density maps */
+
+.level-slider { width: 100%; accent-color: var(--accent); margin: 2px 0 4px; }
+.level-readout { margin-left: auto; color: var(--text); font-size: 11px; }
+/* The tree's sub-rows are padded for text; a slider wants the full width. */
+.tree-sub .row { margin-bottom: 4px; }
+.tree-sub .row:last-child { margin-bottom: 0; }

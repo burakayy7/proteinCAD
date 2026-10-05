@@ -1,0 +1,30 @@
+{
+  "name": "D8-C4",
+  "rotor": [
+    "Q",
+    "R",
+    "S",
+    "T"
+  ],
+  "axle": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P"
+  ],
+  "step": 15.0,
+  "rise": null,
+  "backend": "geometric"
+}

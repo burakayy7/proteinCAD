@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proteincad"
+version = "0.1.0"
+description = "A 3D viewer and editor for protein structures and nanostructures"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []          # the server is standard library only, on purpose
+
+[project.optional-dependencies]
+# Only needed to start and stop an EC2 GPU on demand; the server itself, the
+# viewer and every other runner stay standard library only.
+aws = ["boto3>=1.26"]
+# Add the scientific stack here when the model work starts:
+#   models = ["numpy", "torch", "biotite"]
+
+[project.scripts]
+proteincad = "proteincad.__main__:main"
+
+[tool.setuptools]
+packages = ["proteincad"]

@@ -1,0 +1,35 @@
+{
+  "Comment": [
+    "What proteinCAD needs to start and stop its own GPU, and nothing else.",
+    "Replace REGION, ACCOUNT_ID and INSTANCE_ID, then attach this to the IAM",
+    "user or role the app runs as. Naming the instance in the resource arn is",
+    "the part that matters: these credentials can then start and stop that one",
+    "box and no other, which is what makes them safe to put on a web server.",
+    "DescribeInstances and DescribeInstanceAttribute do not support",
+    "resource-level permissions in EC2 -- they are read-only and have to be",
+    "granted on *. The second is optional: without it proteinCAD simply skips",
+    "the check that a shutdown from inside the box stops it rather than",
+    "terminating it."
+  ],
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "StartAndStopTheDesignBox",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:StartInstances",
+        "ec2:StopInstances"
+      ],
+      "Resource": "arn:aws:ec2:REGION:ACCOUNT_ID:instance/INSTANCE_ID"
+    },
+    {
+      "Sid": "ReadItsStateAndAddress",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceAttribute"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

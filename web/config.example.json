@@ -1,0 +1,21 @@
+{
+  "_comment": [
+    "Copy this to web/config.json on a hosted deployment, and fill it in from",
+    "what `cdk deploy` printed. Without this file the viewer calls relative URLs",
+    "(api/health, api/design) and expects its own Python server -- which is what",
+    "happens on a laptop and in Colab, and is why that path needs no config at all.",
+    "",
+    "Nothing here is a secret. A Cognito user pool client id is a public",
+    "identifier; the client is created without a secret precisely because a",
+    "static page cannot keep one. Do not ever put a key, a token or an AWS",
+    "credential in this file -- anyone who loads the page can read it."
+  ],
+
+  "api": "https://REPLACE.execute-api.us-east-1.amazonaws.com",
+
+  "auth": {
+    "domain": "https://proteincad-login.auth.us-east-1.amazoncognito.com",
+    "clientId": "REPLACE",
+    "redirect": "https://adumbra.burakayy.com/proteincad/"
+  }
+}

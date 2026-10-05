@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>proteinCAD</title>
+<link rel="stylesheet" href="./styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='11' fill='none' stroke='%234f9dff' stroke-width='3'/><circle cx='16' cy='5' r='4' fill='%23ff7a5c'/></svg>">
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#4f9dff" stroke-width="3"/>
+      <circle cx="16" cy="5" r="4" fill="#ff7a5c"/>
+    </svg>
+    <span>protein<b>CAD</b></span>
+  </div>
+
+  <div class="group">
+    <button id="btn-open" class="btn" title="Open a PDB or mmCIF file (or drop one anywhere)">Open&hellip;</button>
+    <input type="file" id="file-input" accept=".pdb,.ent,.cif,.mmcif,.txt" multiple hidden>
+    <form id="fetch-form" class="fetch">
+      <input id="fetch-id" type="text" placeholder="PDB / EMDB ID" maxlength="12" spellcheck="false"
+             title="Fetch by id: a structure from the RCSB (4HHB), or a cryo-EM density map from EMDB (EMD-25575)">
+      <button class="btn" type="submit">Fetch</button>
+    </form>
+  </div>
+
+  <div class="group">
+    <label class="field">
+      <span>Style</span>
+      <select id="representation"></select>
+    </label>
+    <label class="field">
+      <span>Colour</span>
+      <select id="color-scheme"></select>
+    </label>
+  </div>
+
+  <div class="group right">
+    <button id="btn-fit" class="btn ghost" title="Fit view (R)">Fit</button>
+    <button id="btn-spin" class="btn ghost" title="Toggle spin">Spin</button>
+    <button id="btn-snapshot" class="btn ghost" title="Save a PNG of the viewport">Snapshot</button>
+    <button id="btn-export" class="btn ghost" title="Export the scene as a PDB file">Export</button>
+    <a id="btn-docs" class="btn ghost" href="./docs.html" target="_blank" rel="noopener"
+       title="How to use proteinCAD — opens in a new tab">Docs</a>
+    <button id="btn-help" class="btn ghost" title="Keyboard shortcuts">?</button>
+  </div>
+</header>
+
+<main class="workspace">
+  <aside class="panel left" id="panel-left">
+    <div class="panel-head">
+      <h2>Structures</h2>
+      <button class="icon" id="collapse-left" title="Collapse panel">&#8249;</button>
+    </div>
+    <div class="panel-body" id="tree"></div>
+  </aside>
+
+  <section class="viewport" id="viewport">
+    <div class="empty" id="empty-state">
+      <h1>Load a structure</h1>
+      <p>Drop a <code>.pdb</code> or <code>.cif</code> file here, fetch one by id, or start with an example.</p>
+      <div class="examples">
+        <button class="btn" data-example="1CRN">1CRN &middot; crambin</button>
+        <button class="btn" data-example="4HHB">4HHB &middot; haemoglobin</button>
+        <button class="btn" data-example="1BNA">1BNA &middot; B-DNA</button>
+        <button class="btn" data-example="7CGO">7CGO &middot; flagellar motor</button>
+        <button class="btn" data-example="EMD-25575">EMD-25575 &middot; designed rotor map</button>
+      </div>
+    </div>
+    <div class="labels" id="labels"></div>
+    <div class="loading" id="loading" hidden><span class="spinner"></span><span id="loading-text">Loading&hellip;</span></div>
+    <!-- The rotational landscape, docked under the viewport. Inside the
+         viewport rather than in the workspace grid, like the labels and the
+         spinner above: a fourth row would change the three-column layout that
+         the site's mobile stylesheet is written against. Hidden until a scan
+         has produced a curve. -->
+    <div class="strip" id="landscape" hidden></div>
+  </section>
+
+  <aside class="panel right" id="panel-right">
+    <div class="panel-head">
+      <div class="tabs">
+        <button class="tab on" data-tab="inspector">Inspect</button>
+        <button class="tab" data-tab="design">Design</button>
+        <button class="tab" data-tab="motion">Motion</button>
+      </div>
+      <button class="icon" id="collapse-right" title="Collapse panel">&#8250;</button>
+    </div>
+    <div class="panel-body" id="inspector"></div>
+    <div class="panel-body" id="design" hidden></div>
+    <div class="panel-body" id="motion" hidden></div>
+  </aside>
+</main>
+
+<footer class="statusbar">
+  <span id="status-hover" class="mono">&nbsp;</span>
+  <span class="spacer"></span>
+  <span id="status-counts" class="muted"></span>
+</footer>
+
+<div class="dialog-backdrop" id="help" hidden>
+  <div class="dialog">
+    <h2>Shortcuts</h2>
+    <dl class="shortcuts">
+      <dt>Left drag</dt><dd>Rotate</dd>
+      <dt>Right drag / two fingers</dt><dd>Pan</dd>
+      <dt>Scroll</dt><dd>Zoom</dd>
+      <dt>Click</dt><dd>Select residue</dd>
+      <dt>Shift + click</dt><dd>Add to selection</dd>
+      <dt>Alt + click</dt><dd>Select whole chain</dd>
+      <dt>Cmd/Ctrl + click</dt><dd>Select single atom</dd>
+      <dt>Double click</dt><dd>Zoom to what you clicked</dd>
+      <dt>1 &hellip; 6</dt><dd>Cartoon, trace, ball &amp; stick, sticks, spacefill, surface</dd>
+      <dt>F</dt><dd>Frame the selection</dd>
+      <dt>R</dt><dd>Reset the view</dd>
+      <dt>G / T</dt><dd>Move / rotate the selected part</dd>
+      <dt>Esc</dt><dd>Clear the selection</dd>
+      <dt>Backspace</dt><dd>Hide the selection's chains</dd>
+      <dt>[ / ]</dt><dd>Collapse or show the side panels</dd>
+    </dl>
+    <p class="dialog-note">Everything else — selections, measuring, designing —
+      is in <a href="./docs.html" target="_blank" rel="noopener">the docs</a>.</p>
+    <button class="btn" id="help-close">Close</button>
+  </div>
+</div>
+
+<div class="drop-hint" id="drop-hint" hidden><span>Drop to load</span></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

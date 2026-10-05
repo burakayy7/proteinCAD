@@ -1,0 +1,5 @@
+# The API Gateway v2 constructs used here went stable in aws-cdk-lib 2.88; the
+# floor is higher than that so HttpUserPoolAuthorizer and the CORS options are
+# the stable ones rather than the alpha package they used to live in.
+aws-cdk-lib>=2.130.0,<3
+constructs>=10.0.0,<11

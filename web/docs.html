@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>proteinCAD — how to use it</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='11' fill='none' stroke='%234f9dff' stroke-width='3'/><circle cx='16' cy='5' r='4' fill='%23ff7a5c'/></svg>">
+<style>
+/* Self-contained on purpose: this page shares the app's palette but none of its
+   layout, so nothing here can be broken by a change to styles.css. */
+:root {
+  --bg: #0e1116;
+  --panel: #151a21;
+  --line: #262e39;
+  --text: #dfe6ee;
+  --muted: #8b97a6;
+  --accent: #4f9dff;
+  --warn: #ffd54a;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.65 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+header.bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 20px;
+  background: rgba(14, 17, 22, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+header.bar .brand { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+header.bar .spacer { flex: 1; }
+a { color: var(--accent); text-decoration: none; }
+/* Scoped to the content rather than every anchor on the page. Whoever hosts
+   this may inject a link of their own into the header with its own styling,
+   and a blanket a:hover outranks a class rule that only sets colour. */
+main a:hover, footer a:hover { text-decoration: underline; }
+.back {
+  padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px;
+  color: var(--text); font-size: 13px;
+}
+.back:hover { border-color: var(--accent); text-decoration: none; }
+
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px 100px; display: flex; gap: 44px; }
+nav.toc {
+  position: sticky; top: 70px; align-self: flex-start;
+  width: 208px; flex: 0 0 208px; padding-top: 38px;
+  max-height: calc(100vh - 90px); overflow-y: auto;
+  font-size: 13px;
+}
+nav.toc a { display: block; padding: 3px 0; color: var(--muted); }
+nav.toc a:hover { color: var(--text); text-decoration: none; }
+nav.toc .sub { padding-left: 12px; font-size: 12.5px; }
+main { flex: 1; min-width: 0; padding-top: 30px; }
+
+h1 { font-size: 30px; line-height: 1.25; margin: 10px 0 6px; letter-spacing: -0.01em; }
+h2 {
+  font-size: 21px; margin: 52px 0 12px; padding-bottom: 7px;
+  border-bottom: 1px solid var(--line); letter-spacing: -0.01em;
+}
+h3 { font-size: 16px; margin: 30px 0 8px; }
+p, ul, ol { margin: 0 0 14px; }
+ul, ol { padding-left: 22px; }
+li { margin-bottom: 5px; }
+.lede { color: var(--muted); font-size: 16.5px; margin-bottom: 26px; }
+code {
+  font-family: var(--mono); font-size: 0.875em;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 4px; padding: 1px 5px;
+}
+pre {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: 12px 14px; overflow-x: auto; font-size: 13px; line-height: 1.55;
+}
+pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+kbd {
+  font-family: var(--font); font-size: 11.5px; font-weight: 600;
+  background: #1d242e; border: 1px solid var(--line); border-bottom-width: 2px;
+  border-radius: 4px; padding: 1.5px 6px; white-space: nowrap;
+}
+table { width: 100%; border-collapse: collapse; margin: 0 0 18px; font-size: 14px; display: block; overflow-x: auto; }
+th, td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+td:first-child { white-space: nowrap; }
+td code { white-space: nowrap; }
+.note {
+  border-left: 2px solid var(--accent); background: rgba(79, 157, 255, 0.05);
+  padding: 11px 15px; margin: 0 0 16px; border-radius: 0 5px 5px 0;
+}
+.warn { border-left-color: var(--warn); background: rgba(255, 213, 74, 0.05); }
+.note p:last-child { margin-bottom: 0; }
+.muted { color: var(--muted); }
+footer { border-top: 1px solid var(--line); margin-top: 60px; padding-top: 20px; color: var(--muted); font-size: 13px; }
+
+@media (max-width: 860px) {
+  .wrap { display: block; padding: 0 18px 70px; }
+  nav.toc {
+    position: static; width: auto; max-height: none; padding: 26px 0 0;
+    columns: 2; column-gap: 20px;
+  }
+  main { padding-top: 22px; }
+  h1 { font-size: 25px; }
+  h2 { margin-top: 42px; }
+  /* The one table whose first column is sentences rather than labels. Held on
+     one line it pushes the answer off the side of a phone. */
+  table.symptoms td:first-child { white-space: normal; min-width: 8.5em; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="brand">
+    <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#4f9dff" stroke-width="3"/>
+      <circle cx="16" cy="5" r="4" fill="#ff7a5c"/>
+    </svg>
+    <span>protein<b>CAD</b> <span class="muted">docs</span></span>
+  </span>
+  <span class="spacer"></span>
+  <a class="back" href="./index.html">Open the viewer →</a>
+</header>
+
+<div class="wrap">
+
+<nav class="toc">
+  <a href="#start">Getting started</a>
+  <a href="#load">Loading structures</a>
+  <a href="#maps">Density maps</a>
+  <a href="#level" class="sub">Contour level</a>
+  <a href="#move">Moving the camera</a>
+  <a href="#look">Styles and colours</a>
+  <a href="#display" class="sub">Display options</a>
+  <a href="#pick">Selecting things</a>
+  <a href="#language" class="sub">Selection language</a>
+  <a href="#panel">The structures panel</a>
+  <a href="#measure">Measuring</a>
+  <a href="#transform">Moving parts around</a>
+  <a href="#export">Saving your work</a>
+  <a href="#motion">Turning an assembly</a>
+  <a href="#parts" class="sub">1. Rotor and axle</a>
+  <a href="#scan" class="sub">2. Scan</a>
+  <a href="#scrub" class="sub">3. Drag the curve</a>
+  <a href="#readout" class="sub">Reading the numbers</a>
+  <a href="#score" class="sub">What the score is</a>
+  <a href="#design">Designing proteins</a>
+  <a href="#site" class="sub">1. Pick a site</a>
+  <a href="#shape" class="sub">2. Shape and size</a>
+  <a href="#protocols" class="sub">3. Protocol</a>
+  <a href="#contigs" class="sub">4. Contigs</a>
+  <a href="#advanced" class="sub">5. Advanced</a>
+  <a href="#run" class="sub">6. Run it</a>
+  <a href="#sequence" class="sub">7. Sequence and fold</a>
+  <a href="#gpu">Where the GPU is</a>
+  <a href="#machine" class="sub">The shared machine</a>
+  <a href="#account">Signing in</a>
+  <a href="#keys">Keyboard shortcuts</a>
+  <a href="#trouble">When something breaks</a>
+</nav>
+
+<main>
+
+<h1>How to use proteinCAD</h1>
+<p class="lede">A protein viewer you can design in. Load a structure or a cryo-EM
+map, pick a patch on a surface and ask a model to build something that binds
+there — or turn one part of an assembly against another and see what the
+interface does.</p>
+
+<p>Three parts, and only one of them needs anything behind it. The
+<b>viewer</b> runs entirely in your browser: structures, density maps, styles,
+selections, measuring, export. So does the <b>Motion</b> tab, which scans how a
+rotor packs against its axle through a full turn. Both work right here on the
+website, with nothing installed and no account. <b>Design</b> is the part that
+sends jobs to a GPU, so it needs a server behind it and, on the website, a
+sign-in. If you only want to look at things, start at
+<a href="#load">loading structures</a> and stop at
+<a href="#design">Designing proteins</a>.</p>
+
+<h2 id="start">Getting started</h2>
+
+<p>Open the viewer and click one of the example buttons. <b>1CRN</b> is
+crambin, 46 residues, small enough to see all at once. Drag to rotate it,
+scroll to zoom, click a residue to select it. That is most of the interface.</p>
+
+<p>The window has three parts: the structures list on the left, the viewport in
+the middle, and a panel on the right with three tabs — <b>Inspect</b>,
+<b>Design</b> and <b>Motion</b>. Either side panel collapses with <kbd>[</kbd>
+and <kbd>]</kbd>, which is worth knowing on a laptop.</p>
+
+<h2 id="load">Loading structures</h2>
+
+<p>Four ways in, and they all end up in the same place:</p>
+
+<ul>
+  <li><b>Open…</b> in the toolbar, for files on your machine. Pick several at
+  once if you want.</li>
+  <li><b>Drag and drop</b> a file anywhere on the window.</li>
+  <li><b>The id box</b> — type <code>4HHB</code> and press Fetch. It takes EMDB
+  ids as well, which is how you load a <a href="#maps">density map</a>.</li>
+  <li><b>The example buttons</b> on the empty screen.</li>
+</ul>
+
+<p><code>.pdb</code>, <code>.ent</code>, <code>.cif</code> and
+<code>.mmcif</code> all work. mmCIF is usually the better choice for anything
+large, since PDB files can't hold more than 99,999 atoms.</p>
+
+<p>You can also put an id in the URL, which is handy for links:</p>
+
+<pre><code>index.html?load=6WG3
+index.html?load=EMD-25575</code></pre>
+
+<p>Loading more than one structure is normal and expected — that is how you
+compare two things, or dock one against another. They all share the viewport
+and each gets a row in the left panel.</p>
+
+<div class="note">
+<p>Big structures are fine. The 335,000-atom flagellar motor (<b>7CGO</b>) is
+one of the examples specifically so you can see what the viewer does under
+load. It takes a few seconds to parse. Surfaces get coarser automatically on
+anything that size, because a fine one would take minutes.</p>
+</div>
+
+<h2 id="maps">Density maps</h2>
+
+<p>Type an EMDB id where you would type a PDB id — <code>EMD-25575</code> — and
+press Fetch. The viewer downloads the cryo-EM map, contours it, and adds it to
+the structures panel underneath the structures. One of the example buttons loads
+that entry, a designed protein rotor, so you can try it without knowing an
+id.</p>
+
+<p>The box works out which databank you mean from the id itself. Four characters
+is always a PDB entry. An EMDB id either carries its prefix
+(<code>EMD-25575</code>, <code>emd_25575</code>) or is a bare number of five or
+six digits (<code>25575</code>).</p>
+
+<p>A map's row has a colour swatch, <b>✥</b> to put the move handle on it,
+<b>◉</b> to hide or show it, and <b>✕</b> to remove it. Click the arrow at the
+left of the row to open it:</p>
+
+<table>
+  <tr><td><b>level</b></td><td>The contour level, as a slider. The readout gives it in the map's own units and in σ.</td></tr>
+  <tr><td><b>EMDB level</b></td><td>Puts the slider back to the level recorded in the EMDB entry.</td></tr>
+  <tr><td>Style menu</td><td><b>Solid</b>, <b>Wireframe</b> or <b>Transparent</b>. Solid is slightly see-through on purpose: the usual reason to have a map and a model in one scene is to see the model inside the map.</td></tr>
+  <tr><td><b>fitted</b></td><td>A button for each atomic model deposited against the map, which loads it into the same scene. Only shown when the entry has one; the example map does not.</td></tr>
+</table>
+
+<p>The open row also gives the map's title, its grid size and voxel spacing, the
+reported resolution, and how many triangles the surface took.</p>
+
+<h3 id="level">Contour level</h3>
+
+<p>The level is the control that matters. A map is a block of numbers, and the
+surface you see is wherever those numbers cross one value. Set it too low and
+you get a solid brick of noise; too high and there is nothing to draw.</p>
+
+<p>So a map opens at the level its depositors recommended in the EMDB entry, or
+at three σ above the mean when the entry does not give one. Drag the slider and
+the surface follows. The σ figure beside the level is there because raw map
+units differ by orders of magnitude from one map to the next, and σ is the scale
+that means the same thing on all of them.</p>
+
+<p>Maps are reduced as they download. Anything over about eight million voxels
+is averaged down in blocks until it fits, and the row says when that has
+happened — <code>400×400×400, 1.05 Å/voxel, shown at 200×200×200</code>.
+Averaging keeps the noise from turning into speckle on the surface, but detail
+finer than the displayed spacing is not there to see.</p>
+
+<div class="note warn">
+<p><b>A map is scenery, not a molecule.</b> Clicking it selects nothing, the
+selection language does not see it, and Export leaves it out, because a PDB file
+has nowhere to put one. Nothing here <em>fits</em> a model into a map either:
+you can slide a map against a model by hand with ✥, but there is no refinement
+and no correlation score.</p>
+<p>Maps come from EMDB by id only. There is no way yet to open a map file from
+your own disk.</p>
+</div>
+
+<h2 id="move">Moving the camera</h2>
+
+<table>
+  <tr><td><b>Left drag</b></td><td>Rotate</td></tr>
+  <tr><td><b>Right drag</b> or two fingers</td><td>Pan</td></tr>
+  <tr><td><b>Scroll</b></td><td>Zoom</td></tr>
+  <tr><td><b>Double click</b></td><td>Zoom to whatever you clicked</td></tr>
+  <tr><td><kbd>F</kbd></td><td>Frame the current selection</td></tr>
+  <tr><td><kbd>R</kbd></td><td>Reset — fit everything back in view</td></tr>
+  <tr><td><kbd>Space</kbd></td><td>Spin on and off</td></tr>
+</table>
+
+<p>If you get lost, <kbd>R</kbd> always brings everything back into frame.</p>
+
+<h2 id="look">Styles and colours</h2>
+
+<p>The two dropdowns in the toolbar set how everything is drawn. Six styles:</p>
+
+<table>
+  <tr><td><kbd>1</kbd> Cartoon</td><td>Ribbons and arrows. The default, and the right one for seeing a fold.</td></tr>
+  <tr><td><kbd>2</kbd> Backbone trace</td><td>A thin line through the Cα atoms. Cheap to draw, good for very large things.</td></tr>
+  <tr><td><kbd>3</kbd> Ball &amp; stick</td><td>Every atom, with bonds. For looking at a binding site up close.</td></tr>
+  <tr><td><kbd>4</kbd> Sticks</td><td>Bonds without the balls. Less clutter.</td></tr>
+  <tr><td><kbd>5</kbd> Spacefill</td><td>Van der Waals spheres. Shows how tightly things actually pack.</td></tr>
+  <tr><td><kbd>6</kbd> Surface</td><td>The molecular envelope. Slow on large structures, and worth the wait on a binding pocket.</td></tr>
+</table>
+
+<p>The number keys switch style instantly, which is faster than the menu once
+you've got the habit.</p>
+
+<p>Colour schemes:</p>
+
+<table>
+  <tr><td>Chain</td><td>A different colour per chain. The default.</td></tr>
+  <tr><td>Protein / component</td><td>By what the chain <em>is</em> — so in a complex, all copies of the same protein share a colour. Read from the file's own component records, with a sequence-identity fallback when those are missing.</td></tr>
+  <tr><td>Structure</td><td>One colour per loaded file. Use this when comparing two.</td></tr>
+  <tr><td>Secondary structure</td><td>Helices, sheets, coil. Computed by the viewer if the file doesn't say.</td></tr>
+  <tr><td>Element</td><td>The usual CPK colours. Only makes sense in an atomic style.</td></tr>
+  <tr><td>Residue type</td><td>A colour per amino acid.</td></tr>
+  <tr><td>Hydrophobicity</td><td>Good for spotting a buried core or a greasy patch.</td></tr>
+  <tr><td>B-factor / pLDDT</td><td>Blue is confident, red is not. For a predicted structure this is the confidence map.</td></tr>
+  <tr><td>Molecule type</td><td>Protein, nucleic acid, ligand, ion, water.</td></tr>
+  <tr><td>Single colour</td><td>One flat colour, for figures.</td></tr>
+</table>
+
+<h3 id="display">Display options</h3>
+
+<p>Under <b>Inspect → Display</b>:</p>
+
+<ul>
+  <li><b>Waters</b> and <b>Hydrogens</b> — both off by default. Waters in
+  particular will bury a structure in dots if you turn them on without
+  thinking.</li>
+  <li><b>Depth cue</b> fades distant parts into the background. It helps more
+  than it sounds like it will on anything crowded.</li>
+  <li><b>Hover info</b> puts whatever is under the cursor in the status bar at
+  the bottom.</li>
+  <li><b>Background</b> — any colour. White is usually what you want for a
+  figure.</li>
+  <li><b>Clip</b> cuts away the front of the scene so you can see inside. Drag
+  the slider to cut deeper. Good for looking into a channel or a pocket.</li>
+</ul>
+
+<h2 id="pick">Selecting things</h2>
+
+<p>Clicking picks a residue. The modifiers change what "a click" means:</p>
+
+<table>
+  <tr><td><b>Click</b></td><td>That residue, replacing the selection</td></tr>
+  <tr><td><b>Shift + click</b></td><td>Add it to the selection</td></tr>
+  <tr><td><b>Alt + click</b></td><td>The whole chain</td></tr>
+  <tr><td><b>Cmd/Ctrl + click</b></td><td>Just the single atom</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Clear the selection</td></tr>
+  <tr><td><kbd>Cmd/Ctrl</kbd> + <kbd>A</kbd></td><td>Select everything</td></tr>
+</table>
+
+<p>What's selected is highlighted, counted in the status bar, and broken down
+in <b>Inspect → Selection</b> — how many atoms, which chains, which residues,
+the composition, the radius of gyration. Two useful things you can do with a
+selection:</p>
+
+<ul>
+  <li><kbd>I</kbd> <b>isolates</b> it: hides everything else so you can see what
+  you picked without the rest in the way. <kbd>Shift</kbd>+<kbd>H</kbd> brings
+  it all back.</li>
+  <li><kbd>Backspace</kbd> <b>hides</b> the chains the selection touches.</li>
+</ul>
+
+<p>For an assembly, <b>Inspect → Components</b> is usually the faster way in. It
+lists the distinct molecules rather than the chains — a handful of proteins for
+the flagellar motor, instead of 219 rows. Click one to select every copy of it,
+<kbd>Shift</kbd>-click to add another, double-click to select and frame it.</p>
+
+<h3 id="language">The selection language</h3>
+
+<p>Clicking gets tedious past about ten residues. The box at the top of
+<b>Inspect → Selection</b> takes an expression instead. If you've used PyMOL
+this will feel familiar.</p>
+
+<pre><code>chain A and resi 10-45
+protein and not water
+byres (within 4.5 of ligand)
+ss h or ss e
+name CA and b &gt; 70</code></pre>
+
+<p>Combine terms with <code>and</code>, <code>or</code>, <code>not</code> and
+parentheses. Every keyword:</p>
+
+<table>
+  <tr><th>Keyword</th><th>Selects</th></tr>
+  <tr><td><code>all</code>, <code>none</code></td><td>Everything, nothing</td></tr>
+  <tr><td><code>protein</code>, <code>nucleic</code>, <code>water</code>, <code>ion</code>, <code>ligand</code></td><td>By molecule type</td></tr>
+  <tr><td><code>polymer</code></td><td>Protein or nucleic acid — the chain, not what's stuck to it</td></tr>
+  <tr><td><code>hetero</code> / <code>het</code></td><td>Anything from a HETATM record</td></tr>
+  <tr><td><code>backbone</code> / <code>mainchain</code></td><td>N, CA, C, O and the nucleic equivalents</td></tr>
+  <tr><td><code>sidechain</code></td><td>Everything in a residue that isn't backbone</td></tr>
+  <tr><td><code>hydrogen</code> / <code>h</code></td><td>Hydrogens</td></tr>
+  <tr><td><code>chain A</code>, <code>chain A,B</code></td><td>By chain id</td></tr>
+  <tr><td><code>resi 10-45</code>, <code>resi 7,9,20-30</code></td><td>By residue number; ranges and lists both work</td></tr>
+  <tr><td><code>resn ALA</code>, <code>resn HIS,ASP</code></td><td>By residue name</td></tr>
+  <tr><td><code>name CA</code>, <code>name N,CA,C</code></td><td>By atom name</td></tr>
+  <tr><td><code>elem C</code>, <code>elem Fe,Zn</code></td><td>By element</td></tr>
+  <tr><td><code>ss h</code>, <code>ss e</code>, <code>ss c</code>, <code>ss t</code></td><td>Helix, sheet, coil, turn</td></tr>
+  <tr><td><code>b &gt; 70</code>, <code>plddt &lt; 50</code></td><td>By B-factor. <code>plddt</code> is the same field under the name it has in a prediction</td></tr>
+  <tr><td><code>occ &lt; 1</code></td><td>By occupancy</td></tr>
+  <tr><td><code>index</code>, <code>serial</code></td><td>By position in the file, or by the serial the file gives</td></tr>
+  <tr><td><code>within 4.5 of ligand</code></td><td>Everything within that many ångströms of another selection</td></tr>
+  <tr><td><code>byres (…)</code></td><td>Widen to whole residues. Almost always what you want around <code>within</code></td></tr>
+</table>
+
+<p>Short forms exist where they're obvious: <code>i</code> for <code>resi</code>,
+<code>r</code> for <code>resn</code>, <code>e</code> for <code>elem</code>,
+<code>&amp;</code> and <code>|</code> for and/or.</p>
+
+<div class="note">
+<p><code>byres (within 4.5 of ligand)</code> is the one to remember. It gives you
+the binding pocket around whatever is bound — every residue with an atom inside
+4.5 Å of the ligand, whole rather than clipped. Isolate that with <kbd>I</kbd>
+and switch to sticks and you're looking at the site.</p>
+</div>
+
+<h2 id="panel">The structures panel</h2>
+
+<p>Every file you load gets a row on the left, with its chains underneath.
+Click a row to make that structure <b>active</b> — the tools that act on one
+structure act on that one. Per row you can:</p>
+
+<ul>
+  <li><b>Hide or show</b> it, or any single chain.</li>
+  <li><b>Recolour a chain</b> by clicking its colour swatch.</li>
+  <li><b>Set a style for just that structure</b>, overriding the toolbar. This
+  is how you get a surface on one thing and cartoon on another.</li>
+  <li><b>Duplicate</b> it, which is the starting point for building an assembly
+  by hand.</li>
+  <li><b>Remove</b> it.</li>
+</ul>
+
+<p>Density maps get rows of their own below the structures, with a different
+set of controls — see <a href="#maps">Density maps</a>.</p>
+
+<h2 id="measure">Measuring</h2>
+
+<p>Press <kbd>M</kbd> or click <b>Measure</b> in the Inspect panel, then click
+two atoms. The distance in ångströms appears in the list and a label appears in
+the viewport. Keep clicking pairs to add more. Measurements follow the atoms if
+you move a structure, so you can watch a distance change as you dock something
+by hand.</p>
+
+<p><b>Clear</b> removes them all; the ✕ on a row removes one. Press <kbd>M</kbd>
+again to get back to normal selection.</p>
+
+<h2 id="transform">Moving parts around</h2>
+
+<p><b>Inspect → Move / rotate</b>. Pick a target first, then a tool.</p>
+
+<p>Targets: <b>Structure</b> moves the whole active one, <b>Chain</b> moves just
+the selected chain, <b>Volume</b> moves the design volume (see below).</p>
+
+<p>Tools: <b>Move</b> (<kbd>G</kbd>) and <b>Rotate</b> (<kbd>T</kbd>) put a
+handle on the target — drag an arrow or a ring. The numeric fields below show
+the position and rotation and can be typed into if you want something exact.
+<b>Reset</b> puts everything back where the file had it.</p>
+
+<p>Holding <kbd>Shift</kbd> with <kbd>G</kbd> or <kbd>T</kbd> forces the whole
+structure even when a chain is selected.</p>
+
+<h3>Ring of N</h3>
+
+<p>Down at the bottom: <b>Ring of</b> <em>n</em> about an axis. This copies the
+active structure evenly around that axis, which builds a C<em>n</em> ring in one
+click — a pore, a symmetric assembly, a scaffold. <b>Duplicate</b> adds a single
+copy instead. The copies are real structures in the list and can be moved,
+hidden and exported like anything else.</p>
+
+<h2 id="export">Saving your work</h2>
+
+<ul>
+  <li><b>Snapshot</b> saves a PNG of the viewport exactly as it looks.</li>
+  <li><b>Export</b> writes the whole scene as a PDB file, including everything
+  you moved, duplicated or arrayed — positions as they are now, not as they
+  were in the file.</li>
+</ul>
+
+<div class="note warn">
+<p>Export writes PDB, which has hard limits the format can't get past: 99,999
+atoms and single-character chain ids. Anything over that is renumbered and
+remapped on the way out. For a really large assembly, export is lossy about
+names, not about coordinates.</p>
+</div>
+
+<p>Two things Export does not do. It leaves density maps out, because the format
+cannot hold one. And it does not undo a turn made in the Motion tab: a rotor
+left at 140° is written at 140°. Press <b>Reset</b> on the landscape first if
+you want the pose as loaded.</p>
+
+<h2 id="motion">Turning an assembly</h2>
+
+<p>Some assemblies are two parts on one axis: a ring threaded on an axle, a
+rotor inside a stator. The question worth asking about one of those is what the
+interface does as one part turns against the other. The <b>Motion</b> tab
+answers it. It rotates one component about the shared symmetry axis in fixed
+steps, scores how the two parts pack at each angle, and draws the result as a
+curve in a strip under the viewport.</p>
+
+<p>The shape of that curve is the result. Flat means the rotor turns freely.
+Wells mean it has preferred orientations and has to climb out of them. Wells
+whose two sides differ in height mean it leaves more easily one way than the
+other, which is what a ratchet is.</p>
+
+<p>The scan runs in your browser. Nothing is uploaded and no account is needed,
+on the website or anywhere else.</p>
+
+<h3 id="parts">1. Say which part is which</h3>
+
+<p>Load the assembly and open <b>Motion</b>. Under <b>Rotor and axle</b>:</p>
+
+<ul>
+  <li><b>Guess from molecules</b> takes the two largest molecules in the active
+  structure and makes the one with more copies the rotor. For a deposited
+  two-component assembly that is usually right, and it is one click.</li>
+  <li><b>From selection</b>, on the Rotor row or the Axle row, uses the chains
+  you have selected. <b>Alt + click</b> selects a chain; clicking a molecule
+  under <b>Inspect → Components</b> selects every copy of it at once.</li>
+  <li><b>Clear</b> forgets both.</li>
+</ul>
+
+<p>Each row shows which chains it holds. A chain cannot be both — assign it to
+one part and it leaves the other — and both parts have to be chains of the same
+structure. Changing either one discards the current curve, since it was measured
+for different parts.</p>
+
+<p>You do not set the axis. It is measured from each part's own symmetry, by
+superposing a chain onto its symmetry mates, so an assembly that was not
+deposited along z still scans about the right line.</p>
+
+<h3 id="scan">2. Scan</h3>
+
+<table>
+  <tr><td><b>step</b></td><td>How finely the turn is sampled, from 45° (8 points) down to 2° (180 points). The default is 5°, which is 72.</td></tr>
+  <tr><td><b>score by</b></td><td>What scores each angle. <b>packing score — here</b> is the one that runs, "here" meaning this browser.</td></tr>
+  <tr><td><b>rise ±</b></td><td>Greyed out. It would also slide the rotor along the axis for a two-dimensional scan, which the in-browser scorer does not do.</td></tr>
+</table>
+
+<p>Press <b>Scan</b>. A whole turn usually takes about a second, and the curve
+draws itself as the angles arrive. <b>Stop</b> ends a scan early and keeps what
+was drawn. The line under the buttons says how far it got and how long it
+took.</p>
+
+<h3 id="scrub">3. Drag the curve</h3>
+
+<p>The cursor on the plot and the rotor in the viewport are the same control.
+Drag along the curve and the rotor turns, so a well at 140° is a shape you can
+look at rather than a number.</p>
+
+<table>
+  <tr><td><b>Drag on the plot</b></td><td>Turns the rotor to the nearest angle that was scanned. It snaps, so the numbers shown are always measurements and never interpolations.</td></tr>
+  <tr><td><b>The slider</b> underneath</td><td>Turns it to any whole degree.</td></tr>
+  <tr><td><b>⟨</b> and <b>⟩</b></td><td>Previous and next scanned angle</td></tr>
+  <tr><td><b>⟨⟨</b> and <b>⟩⟩</b></td><td>Previous and next deep well</td></tr>
+  <tr><td><b>Reset</b></td><td>Back to the orientation as loaded</td></tr>
+  <tr><td><b>×</b></td><td>Hides the strip. Scanning again brings it back.</td></tr>
+</table>
+
+<p>On the plot itself, the yellow dots are deep wells and the smaller grey ones
+are lesser minima. The faint dashed lines are one period apart, which is what
+makes "eight wells, 45° apart" something you can see. The curve is dashed while
+a scan is still running. Below it is the readout for the angle under the cursor:
+the score, the buried area in Å², the number of clashing atom pairs and the gap
+across the interface.</p>
+
+<p>Turning never damages anything. Every angle is applied to the pose the scan
+started from rather than on top of the last one, so <b>Reset</b> returns the
+exact coordinates you loaded. Measurements follow the rotor, so a distance
+across the interface can be watched through the turn.</p>
+
+<h3 id="readout">Reading the numbers</h3>
+
+<p>When a scan finishes, <b>What the curve says</b> appears in the Motion tab.
+Hover any line for what it means.</p>
+
+<table>
+  <tr><td><b>symmetry</b></td><td>The rotational fold measured for each part, such as <code>rotor C4, axle C8</code>.</td></tr>
+  <tr><td><b>axis agree</b></td><td>The angle between the axis the rotor implies and the one the axle implies. Close to zero is what you want. A large figure means the parts do not share an axis, and the curve is not measuring what it appears to.</td></tr>
+  <tr><td><b>period</b></td><td>The spacing at which the curve repeats, measured from the curve.</td></tr>
+  <tr><td><b>symmetry says</b></td><td>What the period has to be: 360° over the lowest common multiple of the two folds. <b>✓</b> means the scan agrees and <b>✕</b> means it does not; "too coarse to check" means this step size cannot test it.</td></tr>
+  <tr><td><b>wells</b></td><td>How many minima, split into deep and lesser. A well is deep when its prominence is at least a tenth of the curve's range.</td></tr>
+  <tr><td><b>barrier</b></td><td>The mean height to climb out of a well, going forwards.</td></tr>
+  <tr><td><b>depth range</b></td><td>Highest point minus lowest.</td></tr>
+  <tr><td><b>asymmetry</b></td><td>Forward barrier against reverse, from −1 to 1. Zero is a rotor equally happy to turn either way. A dash means it cannot be measured: with one well per period, both directions cross the same peak.</td></tr>
+  <tr><td><b>as loaded</b></td><td>Where the orientation you loaded ranks among those scanned, such as <code>rank 1 of 72, in a well</code>. For an experimental structure it should be at or near the bottom.</td></tr>
+</table>
+
+<div class="note">
+<p><b>Pick a step that divides the period.</b> Symmetry fixes the period before
+anything is scored: a four-fold rotor on an eight-fold axle has to repeat every
+45°. A scan can only confirm that if 45° is a whole number of steps. At 10° it
+is not, so the panel says "too coarse to check" and names a step that works —
+15° in this case. That is the scan declining to test the period. It is not the
+assembly failing the test.</p>
+</div>
+
+<h3 id="score">What the score is, and is not</h3>
+
+<p>The packing score is geometry. It combines the surface area buried between
+the two parts, how much their atoms overlap, and the gap across the interface
+into one number in arbitrary units, where lower means better packed. It finds
+the orientations that fit together well, which is most of what gives a landscape
+its shape.</p>
+
+<div class="note warn">
+<p><b>It is not a force field, and its numbers are not binding energies.</b>
+The period of a landscape is guaranteed by symmetry and will be right whatever
+scores it. The depths of the wells carry no such guarantee — they are what this
+scorer says, and should be read as "packs better than" rather than as
+energies.</p>
+</div>
+
+<p>If the panel says only a few percent of the turn is clash-free, the two parts
+are interdigitated: they mesh rather than rotate, and most of the curve is a
+steric wall. That is a finding about the assembly, not a fault in the scan.</p>
+
+<p>Running proteinCAD from its own Python server adds a second entry to the
+<b>score by</b> menu, <b>interface ddG</b>, reserved for a Rosetta energy
+function. It is a placeholder in this build and shows as unavailable.</p>
+
+<h2 id="design">Designing proteins</h2>
+
+<p>This is the part that needs the Python server and a GPU. The Design tab will
+tell you plainly if it can't reach one.</p>
+
+<p>The idea: you pick a patch on a protein, and RFdiffusion draws a new protein
+backbone against it. That backbone has no sequence — every residue comes back as
+glycine, because it's a shape and nothing more. So there's a second step, where
+ProteinMPNN chooses amino acids for it and ESMFold folds that sequence on its
+own to see whether it comes back to the shape it was designed for.</p>
+
+<p>The two steps are deliberately separate. The first takes minutes and is worth
+looking at before you pay for the second.</p>
+
+<h3 id="site">1. Pick a site</h3>
+
+<p>Click <b>Pick site</b>, then click residues on the target. Click again to
+unpick. Or select residues however you like and press <b>From selection</b>.</p>
+
+<p>These are the <em>hotspots</em> — the residues the new chain should touch.
+Three to six on a contiguous patch works well. Scattered picks across opposite
+faces give the model an impossible instruction, and you'll get nonsense back.</p>
+
+<h3 id="shape">2. Shape and size (optional)</h3>
+
+<p>Draw a cylinder, box or sphere in the scene to say roughly how big the new
+protein should be and where it should sit. Drag the handles to move and resize
+it. <b>Use volume</b> converts its volume into a residue count — about 133 Å³
+per residue — and fills in the length range for you.</p>
+
+<p>This is a sizing aid, not a constraint. RFdiffusion has no way to be told
+"fill this box". What actually reaches the model is the length range and the
+hotspots. If you skip the volume entirely, nothing is lost — just set the length
+yourself.</p>
+
+<h3 id="protocols">3. Choose a protocol</h3>
+
+<p>The <b>make</b> menu at the top of Run. Six of them, and they want different
+things from you:</p>
+
+<table>
+  <tr><th>Protocol</th><th>What it does</th><th>Needs</th></tr>
+  <tr><td><b>Binder</b></td><td>Builds a new chain against the residues you picked. The default, and the only one that uses hotspots.</td><td>Target + hotspots</td></tr>
+  <tr><td><b>Motif scaffolding</b></td><td>Keeps the picked residues exactly as they are and builds a new protein around them. For carrying a functional site into a new scaffold.</td><td>Target + picked residues</td></tr>
+  <tr><td><b>Unconditional</b></td><td>No target at all. Samples a protein of the given length from nothing. The honest way to see what the model does on its own.</td><td>Just a length</td></tr>
+  <tr><td><b>Symmetric oligomer</b></td><td>Samples a symmetric assembly. The length is the <em>whole</em> assembly, so it has to divide by the number of chains.</td><td>Length + symmetry setting</td></tr>
+  <tr><td><b>Partial diffusion</b></td><td>Variations on something you already have. Load a design back in, pick it, and it gets noised partway and denoised again. Good for exploring around a hit.</td><td>A structure to vary</td></tr>
+  <tr><td><b>Fold conditioned</b></td><td>Conditions on a fold described as secondary structure and adjacency rather than coordinates.</td><td>Scaffold files, see below</td></tr>
+</table>
+
+<p>Switching protocol rewrites the settings that belonged to the old one and
+leaves alone anything you changed yourself.</p>
+
+<div class="note warn">
+<p><b>Fold conditioned</b> is offered in full but isn't made easy. It needs
+<code>_ss.pt</code> and <code>_adj.pt</code> files generated in advance on the
+GPU machine by RFdiffusion's own
+<code>helper_scripts/make_secstruc_adj.py</code>. The panel takes the paths; it
+doesn't make the files.</p>
+</div>
+
+<h3 id="contigs">4. Contigs</h3>
+
+<p>The <b>contigs</b> box is the string RFdiffusion actually gets. Leave it
+empty and one is built for you from what you picked — that's right almost every
+time, and the line underneath always shows you what it will be.</p>
+
+<p>Edit it when you need something the panel can't express: a chain break, a
+specific motif layout, an inpainted span. <b>Edit auto</b> copies the generated
+one into the box so you can change it rather than write it from scratch;
+<b>Auto</b> puts it back. An edit is never a one-way door.</p>
+
+<p>Roughly, <code>A1-46/0 60-70</code> means "keep chain A residues 1–46, chain
+break, then build 60 to 70 new residues".</p>
+
+<h3 id="advanced">5. Advanced settings</h3>
+
+<p>Everything RFdiffusion can be told, 44 settings in six groups: motif,
+sampling, model, symmetry, potentials, scaffold. The panel only shows the ones
+your protocol normally uses — <b>Show all</b> reveals the rest, <b>Reset</b>
+puts everything back to RFdiffusion's own defaults.</p>
+
+<p>Two live out in the open because they're the ones people actually turn:</p>
+
+<ul>
+  <li><b>steps</b> — diffusion steps. 50 is the default. Fewer is faster and
+  rougher.</li>
+  <li><b>noiseScale</b> — how much randomness. Lower gives more conservative,
+  more designable backbones; higher explores more and fails more.</li>
+</ul>
+
+<p>On/off settings have three states, not two: <b>—</b> means "don't mention it,
+use RFdiffusion's default", which is different from explicitly sending
+<b>off</b>. The overrides box at the bottom passes anything you type straight to
+<code>run_inference.py</code>, one per line, for the rare thing the panel
+doesn't know about.</p>
+
+<div class="note">
+<p>If you're not sure whether a setting took effect, run the job and click
+<b>Command</b> on it in the Jobs list. That's the actual command line the model
+was run with. It's the only way to tell a setting that was applied from one the
+GPU worker was too old to have heard of.</p>
+</div>
+
+<h3 id="run">6. Run it</h3>
+
+<p>Set <b>designs</b> (how many backbones to generate — 4 to 8 is a sensible
+first go), a <b>seed</b> if you want the run repeatable, and press <b>Run
+design</b>. <b>Preview spec</b> shows exactly what would be sent, if you want to
+look before committing.</p>
+
+<p>The job appears in <b>Jobs</b> with a progress count and a line saying what
+it's doing right now. Each finished design gets a button — click it to load the
+result into the viewer alongside the target, where it's a structure like any
+other. You can measure it, colour it, export it.</p>
+
+<p>Jobs keep running if you close the tab. They're on the server, not in the
+browser.</p>
+
+<h3 id="sequence">7. Sequence and fold</h3>
+
+<p>A backbone isn't a protein yet. Set the numbers under <b>Sequence and
+fold</b> — how many sequences to design (<b>seqs</b>, 8 is fine), how many of
+those to actually fold (<b>fold</b>, 2 by default because folding is the slow
+part), and the sampling temperature. Then find the finished job in the Jobs
+list and press a design's number in its <b>sequence</b> row.</p>
+
+<p>When it finishes you get a line like:</p>
+
+<pre><code>✓ 2 of 8 folded · best 1.34 Å from the backbone, pLDDT 87</code></pre>
+
+<p>That's the number that matters. ESMFold saw only the sequence — no
+coordinates, no backbone. If it comes back within <b>2 Å</b> of the shape you
+designed, with <b>pLDDT above 80</b>, the sequence really does encode that
+shape. That's the standard self-consistency filter and it kills most bad
+designs.</p>
+
+<div class="note warn">
+<p><b>The folded design will look almost identical to the backbone. That's the
+point, not a bug.</b> The prediction is superposed onto the backbone it came
+from, so position and orientation match by construction and only the shape can
+differ. Looking <em>different</em> is the failure case.</p>
+<p>But check which you're looking at. With the defaults only the first two
+results are folded; the other six are the backbone wearing a different sequence
+— same coordinates exactly. Folded ones are the highlighted buttons. Hover any
+result for its numbers, or switch to sticks: a real prediction has side chains,
+a backbone doesn't.</p>
+</div>
+
+<p>What this does <em>not</em> tell you is whether your design binds. It folds
+the new chain on its own, so it measures self-consistency, not affinity. A
+design that passes this is worth taking further; it isn't a binder yet.</p>
+
+<h2 id="gpu">Where the GPU is</h2>
+
+<p>The <b>on</b> menu beside Run picks which one. Three possibilities:</p>
+
+<table>
+  <tr><td><b>mock</b></td><td>No GPU at all. Builds a real helical bundle and puts it where the volume was drawn, so you can exercise the whole workflow offline. <b>It is not a design method</b> — nothing it produces means anything biologically. It exists for testing.</td></tr>
+  <tr><td><b>remote</b></td><td>A GPU you started yourself, usually a Colab notebook with a tunnel. Set the address under <b>Compute endpoint</b>. A Colab tunnel gets a new address every session, and that box is where you follow it without restarting anything.</td></tr>
+  <tr><td><b>ec2</b></td><td>A machine on AWS that's created when somebody needs it and destroyed when nobody does. On the version at adumbra.burakayy.com this is the only option, and it's already selected.</td></tr>
+</table>
+
+<p>With <b>ec2</b> you get a <b>GPU</b> section showing the state. The instance
+is kept stopped, because a GPU bills by the second whether or not it's
+computing. The first job that needs it starts it — about a minute or two — and
+it stops itself once nothing has needed it for fifteen minutes. The countdown is
+right there, along with a <b>Stop now</b> button.</p>
+
+<p>Pressing <b>Start</b> while you're still setting a design up means even the
+first job runs immediately. That's the only way to avoid the wait.</p>
+
+<h3 id="machine">The shared machine</h3>
+
+<p>The copy on the website works differently, and it's worth understanding
+because it explains a wait you'll otherwise find puzzling.</p>
+
+<p>There is no machine most of the time. Not a stopped one — none. That's the
+point: a GPU costs about fifty cents an hour whether or not it's computing, and
+one sitting idle overnight for nobody is the most expensive thing a project like
+this can do. So the machine is <em>created</em> when somebody wants it and
+destroyed thirty minutes after the last job.</p>
+
+<p>Which means the first design of a session has real steps to get through, and
+the <b>GPU machine</b> section shows them happening rather than hiding them:</p>
+
+<table>
+  <tr><td><b>Start GPU machine</b></td><td>Asks AWS for one. Four or five minutes to exist, boot, and pull the model software — the panel says which stage it's on.</td></tr>
+  <tr><td><b>Download</b> beside each model</td><td>Fetches that model's weights onto it — RFdiffusion is 3.9 GB, ESMFold 8.5 GB, ProteinMPNN a tenth of that. Half a minute each. The bar shows the megabytes.</td></tr>
+</table>
+
+<p><b>Run design</b> lights up when the machine is ready and the models that
+protocol needs are there. Until then it tells you what's left — "Start the GPU
+machine, then download RFdiffusion."</p>
+
+<p>The <b>sequence</b> buttons need different weights, ProteinMPNN and ESMFold,
+and there's no point making you fetch eight gigabytes before you've drawn a
+backbone. So they are never greyed out. Press one before those models are on
+the machine and it tells you what is missing and starts downloading it, with
+the progress showing in the GPU machine section. It does not then run on its
+own: press it again once the models show ready. If the machine itself is not
+running, it says that instead.</p>
+
+<p>You don't have to press any of it. Pressing <b>Run</b> with nothing
+downloaded works fine — the job just spends that time first instead, and says
+"fetching the models this job needs" while it does. The buttons exist so you can
+get the waiting out of the way while you're still setting a design up.</p>
+
+<p>Three things follow from the machine being shared:</p>
+
+<ul>
+  <li><b>It's already warm if somebody else started it.</b> The panel shows
+  ready, the models show ready, and you skip straight to Run.</li>
+  <li><b>You can't kill it, but you can retire it.</b> There is no Stop button
+  and no Terminate — on a machine other people are using, either is a way to end
+  somebody else's run, and nothing in the account has the permission to do it.
+  <b>Retire</b> asks instead: the machine finishes anything running or queued,
+  then shuts itself down, and the next design starts a fresh one. Press it twice,
+  because everyone shares the machine. It also goes on its own after thirty idle
+  minutes.</li>
+  <li><b>Starting it again is a fresh download.</b> Nothing survives, because
+  nothing exists. That's the trade for it costing about a dollar a month rather
+  than seventeen.</li>
+</ul>
+
+<p>Occasionally you'll see "AWS has no g4dn.xlarge to spare in any of the three
+zones". That one is exactly what it says — the region is full — and it usually
+clears in a few minutes. Press Start again.</p>
+
+<h2 id="account">Signing in</h2>
+
+<p>If you're running proteinCAD yourself — <code>python3 -m proteincad</code>,
+or a Colab notebook — there's no sign-in and no <b>Account</b> section. It's
+your machine and your GPU.</p>
+
+<p>The copy on the website is different, because the GPU behind it costs about
+fifty cents an hour and somebody is paying for it. So:</p>
+
+<ul>
+  <li><b>Looking at structures needs no account.</b> Loading files, styles,
+  colours, selections, measuring, export — all of it works signed out. So do
+  density maps and the Motion tab, which run in your browser. That's most of
+  the tool.</li>
+  <li><b>Sending a design needs one, and anyone can make one.</b> Click
+  <b>Create account</b> in the Account section. Give an email address and a
+  password; a code arrives by email; type it back in. The account doesn't work
+  until you do, so use an address you can read.</li>
+  <li><b>Already have one?</b> <b>Sign in</b> is the other button. Either way
+  you come back to where you were, with whatever you had loaded still
+  loaded.</li>
+</ul>
+
+<p>Once you're in, the Account section shows how many jobs you've used today.
+There are three limits, and they exist because every one of those jobs is GPU
+time:</p>
+
+<table>
+  <tr><td><b>20 a day</b></td><td>per person. Resets at midnight UTC — the panel says how long that is.</td></tr>
+  <tr><td><b>2 at once</b></td><td>queued or running. Wait for one, or cancel it.</td></tr>
+  <tr><td><b>100 a day</b></td><td>across everybody together.</td></tr>
+</table>
+
+<p>A sequence-and-fold run counts the same as a backbone run, because it uses
+the same card for about as long.</p>
+
+<p>Starting the GPU machine is counted too — five a day each, twenty across
+everyone. A machine that starts and runs nothing still bills for its idle
+minutes, which is what that limit is for.</p>
+
+<p>Two smaller differences on the shared copy. Structures come straight from the
+RCSB, and maps straight from EMDB, rather than through the server, so
+<b>Fetch</b> works exactly the same but nothing is cached for you. And finished designs download through a link that's
+good for five minutes — if you leave a job list open for an hour and click
+<b>Load</b>, refresh the list first.</p>
+
+<p>Signing out clears everything on your device. Closing the tab does the same
+thing on its own.</p>
+
+<h2 id="keys">Keyboard shortcuts</h2>
+
+<table>
+  <tr><th>Key</th><th></th></tr>
+  <tr><td><kbd>1</kbd> – <kbd>6</kbd></td><td>Cartoon, trace, ball &amp; stick, sticks, spacefill, surface</td></tr>
+  <tr><td><kbd>F</kbd></td><td>Frame the selection</td></tr>
+  <tr><td><kbd>R</kbd></td><td>Reset the view</td></tr>
+  <tr><td><kbd>G</kbd> / <kbd>T</kbd></td><td>Move / rotate the selected part</td></tr>
+  <tr><td><kbd>Shift</kbd>+<kbd>G</kbd> / <kbd>T</kbd></td><td>Same, but on the whole structure</td></tr>
+  <tr><td><kbd>M</kbd></td><td>Measure mode on and off</td></tr>
+  <tr><td><kbd>I</kbd></td><td>Isolate the selection — hide everything else</td></tr>
+  <tr><td><kbd>Shift</kbd>+<kbd>H</kbd></td><td>Show everything again</td></tr>
+  <tr><td><kbd>Space</kbd></td><td>Spin</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Clear the selection and drop the move handle</td></tr>
+  <tr><td><kbd>Backspace</kbd></td><td>Hide the selection's chains</td></tr>
+  <tr><td><kbd>Cmd/Ctrl</kbd>+<kbd>A</kbd></td><td>Select everything</td></tr>
+  <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Collapse the left / right panel</td></tr>
+</table>
+
+<p>The <b>?</b> button in the toolbar shows the short version of this without
+leaving the viewer.</p>
+
+<h2 id="trouble">When something breaks</h2>
+
+<table class="symptoms">
+  <tr><th>What you see</th><th>What it is</th></tr>
+  <tr><td>"No server answering on api/health"</td><td>You're on the static site, or the Python server isn't running. The viewer works; design doesn't. Start it with <code>python3 -m proteincad</code>.</td></tr>
+  <tr><td>"This server is running code older than the files on disk"</td><td>The web files reload on every request, the Python process doesn't. Restart the server.</td></tr>
+  <tr><td>"Pick at least one target residue"</td><td>The protocol you chose needs hotspots and none are picked. Press <b>Pick site</b> and click some.</td></tr>
+  <tr><td>A job fails immediately</td><td>Open <b>Command</b> on it. The message from the model is usually specific — a bad contig, a length that doesn't divide by the symmetry, a missing scaffold file.</td></tr>
+  <tr><td>The tunnel stopped resolving</td><td>Colab session ended. Re-open the tunnel in the notebook, then paste the new address under <b>Compute endpoint</b>.</td></tr>
+  <tr><td>Surface takes forever</td><td>It's a big structure. Use <b>Backbone trace</b> to navigate, then isolate a region (<kbd>I</kbd>) before switching to surface.</td></tr>
+  <tr><td>A structure appears to be missing atoms</td><td>Only the first model of an NMR ensemble is shown, and alternate locations past the first are dropped.</td></tr>
+  <tr><td>"EMDB has no entry EMD-…"</td><td>There is no map with that number. Check the digits against the entry's page on EMDB.</td></tr>
+  <tr><td>"Nothing is enclosed at this level"</td><td>The contour level is above everything in the map. Drag the level down, or press <b>EMDB level</b>.</td></tr>
+  <tr><td>A map shows as a solid block</td><td>The level is too low, so the surface is wrapping noise. Drag it up, or press <b>EMDB level</b>.</td></tr>
+  <tr><td>"The download ended early"</td><td>The connection dropped partway through a map, which leaves a hole in it. Remove the map and fetch it again.</td></tr>
+  <tr><td><b>Scan</b> is greyed out</td><td>Hover it for the reason. Usually no rotor or no axle has been chosen yet.</td></tr>
+  <tr><td>"…does not have two distinct molecules"</td><td><b>Guess from molecules</b> needs two different molecules to tell apart. Select the chains of each part yourself and use <b>From selection</b>.</td></tr>
+  <tr><td>"a landscape is measured within one structure"</td><td>The rotor and the axle are in two different loaded files. <b>Export</b> the scene, which writes both into one PDB file, load that back in and pick the parts again.</td></tr>
+  <tr><td>"too coarse to check" beside the period</td><td>This step size cannot test the period symmetry predicts. The note underneath names a step that can.</td></tr>
+  <tr><td>"This machine is running an older build"</td><td>The shared GPU machine started before the site was last updated and keeps the code it booted with. <b>Retire</b> it; the next design starts a current one.</td></tr>
+  <tr><td>"Asked to retire … and still running"</td><td>The machine is too old to act on a retire. Only whoever runs the deployment can clear it, by terminating the instance in the AWS console.</td></tr>
+  <tr><td>A local server, but the page acts like the website</td><td>The checkout holds a <code>web/config.json</code> from a deployment, so the page is calling that API and not your server. Add <code>?local=1</code> to the address to ignore it in that tab.</td></tr>
+</table>
+
+<footer>
+  <p>proteinCAD is a viewer with a design loop attached. It shows the asymmetric
+  unit as deposited — mmCIF assembly operators aren't applied — and surfaces are
+  Gaussian rather than solvent-excluded. Large density maps are block-averaged
+  to fit in memory, and the landscape score is a geometric packing measure, not
+  an energy.</p>
+  <p><a href="./index.html">Back to the viewer</a></p>
+</footer>
+
+</main>
+</div>
+
+</body>
+</html>

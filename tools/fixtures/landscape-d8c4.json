@@ -1,0 +1,227 @@
+{
+ "_comment": [
+  "The landscape of landscape-d8c4.pdb, as proteincad/landscape.py computes it.",
+  "web/src/core/landscape.js has to reproduce it: tools/check.mjs asserts that,",
+  "and tools/check_server.py asserts the Python still produces it.",
+  "Rebuild with: python3 tools/fixtures/make-landscape-fixture.py"
+ ],
+ "rotor": [
+  "Q",
+  "R",
+  "S",
+  "T"
+ ],
+ "axle": [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "O",
+  "P"
+ ],
+ "step": 15.0,
+ "axis": {
+  "direction": [
+   -1.00985592047742e-05,
+   1.9346758173574815e-06,
+   0.9999999999471381
+  ],
+  "rotor_fold": 4,
+  "axle_fold": 8,
+  "expected_period": 45.0
+ },
+ "points": [
+  {
+   "angle": 0.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 15.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 30.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 45.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 60.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 75.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 90.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 105.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 120.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 135.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 150.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 165.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 180.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 195.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 210.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 225.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 240.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 255.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 270.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 285.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 300.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  },
+  {
+   "angle": 315.0,
+   "score": -4.9815,
+   "bsa": 498.1,
+   "clashes": 0,
+   "contacts": 16
+  },
+  {
+   "angle": 330.0,
+   "score": -4.6607,
+   "bsa": 466.1,
+   "clashes": 0,
+   "contacts": 28
+  },
+  {
+   "angle": 345.0,
+   "score": -5.34,
+   "bsa": 534.0,
+   "clashes": 0,
+   "contacts": 12
+  }
+ ],
+ "descriptors": {
+  "period": 45.0,
+  "period_order": 8,
+  "period_resolvable": true,
+  "period_matches_symmetry": true,
+  "deep_count": 8,
+  "lesser_count": 0,
+  "range": 0.6793,
+  "barrier_mean": 0.6793,
+  "asymmetry": null,
+  "minima_per_period": 1.0,
+  "clash_free_fraction": 1.0,
+  "best": 30.0
+ }
+}

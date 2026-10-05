@@ -1,0 +1,57 @@
+# The worker that drains the queue.
+#
+# Installed by the launch template's user data, not by hand -- the machine this
+# runs on is created for a job and destroyed after one, so nobody ever logs in
+# to put it there.
+#
+#     journalctl -u proteincad-sqs -f     (via `aws ssm start-session`)
+#
+# Restart=always is the point of running it under systemd at all: this process
+# holds a message from the queue while a job runs, and a crash has to end with
+# something picking that message back up.
+
+[Unit]
+Description=proteinCAD GPU worker
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=proteincad
+Group=proteincad
+# Docker only. This user has no sudo; being in the docker group is
+# root-equivalent on the host, which is a decision on the record rather than an
+# oversight -- see the README. The container it launches has no network, no
+# credentials and no privileges.
+SupplementaryGroups=docker
+WorkingDirectory=/opt/proteincad
+# Written by user data at boot, from the launch template. There is nothing to
+# edit here: a new setting is a new deploy, and the next machine has it.
+EnvironmentFile=/etc/proteincad/worker.env
+ExecStart=/usr/bin/python3 -m proteincad.sqs_worker
+Restart=always
+RestartSec=5
+# Not a hard kill: the worker has a message in flight and a container running,
+# and the tidy exit deletes one and stops the other.
+KillSignal=SIGINT
+TimeoutStopSec=90
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# The instance store: the container image, the weights and every job's
+# scratch. The root volume holds an operating system and nothing else.
+ReadWritePaths=/mnt/fast
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

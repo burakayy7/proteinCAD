@@ -1,0 +1,28 @@
+[Unit]
+Description=proteinCAD GPU worker
+Documentation=https://github.com/burakayy7/proteinCAD
+# The app starts this instance and then waits for the worker to answer, so the
+# network has to be up before there is anything to answer on.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=proteincad
+Group=proteincad
+EnvironmentFile=/etc/proteincad/worker.env
+WorkingDirectory=/opt/proteincad
+# Through a shell so the settings in worker.env choose the interpreter, the port
+# and the generator. Nothing about this deployment is written into the unit.
+ExecStart=/bin/sh -c 'exec "$RFDIFFUSION_PYTHON" /opt/proteincad/colab_worker.py \
+    --host 0.0.0.0 --port "$PROTEINCAD_WORKER_PORT" $PROTEINCAD_WORKER_ARGS'
+# A worker that dies takes the whole box down with it as far as the app is
+# concerned, and the idle watchdog will stop the instance if this keeps failing.
+Restart=always
+RestartSec=5
+# Model loading is slow and memory-hungry; neither is a reason to be killed.
+TimeoutStartSec=0
+OOMPolicy=continue
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+{
+  "direction": [
+    -6.788863875273518e-06,
+    1.0255767944984483e-06,
+    0.9999999999764297
+  ],
+  "point": [
+    1.3481279584734043e-16,
+    2.458350983098561e-16,
+    -1.1696992580872186e-15
+  ],
+  "source": "both components",
+  "rotor_fold": 4,
+  "axle_fold": 8,
+  "agreement": 0.001,
+  "spread": 0.003,
+  "expected_period": 45.0,
+  "rotor_atoms": 56,
+  "axle_atoms": 224,
+  "total": 24
+}

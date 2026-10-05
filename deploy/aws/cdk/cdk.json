@@ -1,0 +1,34 @@
+{
+  "app": "python3 app.py",
+  "watch": {
+    "exclude": [
+      "**"
+    ]
+  },
+  "context": {
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:validateSnapshotRemovalPolicy": true,
+    "proteincad:origin": "https://adumbra.burakayy.com",
+    "proteincad:appPath": "/proteincad/",
+    "proteincad:domainPrefix": "proteincad-login",
+    "proteincad:instanceType": "g4dn.xlarge",
+    "proteincad:maxDesigns": 8,
+    "proteincad:dailyJobs": 20,
+    "proteincad:concurrentJobs": 2,
+    "proteincad:globalDailyJobs": 100,
+    "proteincad:idleMinutes": 30,
+    "proteincad:jobTimeout": 3600,
+    "proteincad:budgetUsd": 120,
+    "proteincad:budgetEmail": "",
+    "proteincad:rootVolumeGb": 100,
+    "proteincad:machineStarts": 5,
+    "proteincad:globalDailyLaunches": 20,
+    "proteincad:jobMemory": "12g",
+    "proteincad:amiParameter": "/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id",
+    "proteincad:devOrigins": "",
+    "proteincad:openSignUp": true,
+    "proteincad:hfTokenSecret": ""
+  }
+}

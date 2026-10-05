@@ -1,0 +1,7 @@
+[Unit]
+Description=Stop the proteinCAD GPU box when nothing needs it
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/proteincad/worker.env
+ExecStart=/usr/local/bin/proteincad-idle
